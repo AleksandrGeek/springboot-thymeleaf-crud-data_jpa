@@ -2,79 +2,165 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title th:text="${user != null ? 'Редактировать Пользователя' : 'Создать Польщователя'}">
+    <title th:text="${user != null && user.id != null ? 'Редактировать пользователя' : 'Создать пользователя'}">
         User Form
     </title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
-        .form-container {
-            max-width: 500px;
-            margin: 50px auto;
-            padding: 30px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 40px 0;
         }
-        .form-title {
-            color: #0d6efd;
-            border-bottom: 2px solid #0d6efd;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
+        .form-card {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .form-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .form-body {
+            padding: 40px;
+        }
+        .form-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+        .form-footer {
+            padding: 20px 40px;
+            background: #f8f9fa;
+            border-top: 1px solid #eee;
+            text-align: center;
+        }
+        .required-label::after {
+            content: " *";
+            color: #dc3545;
+        }
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
         }
     </style>
 </head>
 <body>
-<div class="form-container">
-    <!-- Заголовок -->
-    <h2 class="form-title" th:text="${user != null ? '✏️ Редактировать Пользователя' : '➕ Создать Пользователя'}">
-        User Form
-    </h2>
-
-    <!-- Форма -->
-    <form th:action="${user != null ? '/update' : '/create'}" method="post">
-        <!-- Скрытое поле ID для редактирования -->
-        <input th:if="${user != null}"
-               type="hidden"
-               name="id"
-               th:value="${user.id}">
-
-        <!-- Поле Name -->
-        <div class="mb-3">
-            <label for="name" class="form-label">Name *</label>
-            <input type="text"
-                   class="form-control"
-                   id="name"
-                   name="name"
-                   th:value="${user != null ? user.name : ''}"
-                   required
-                   placeholder="Enter full name">
-        </div>
-
-        <!-- Поле Email -->
-        <div class="mb-3">
-            <label for="email" class="form-label">Email *</label>
-            <input type="email"
-                   class="form-control"
-                   id="email"
-                   name="email"
-                   th:value="${user != null ? user.email : ''}"
-                   required
-                   placeholder="Enter email address">
-        </div>
-
-        <!-- Кнопки -->
-        <div class="d-flex justify-content-between mt-4">
-            <div>
-                <button type="submit" class="btn btn-primary me-2">
-                    <span th:text="${user != null ? 'Update' : 'Create'}"></span> User
-                </button>
-                <button th:if="${user == null}" type="reset" class="btn btn-secondary">
-                    Clear
-                </button>
+<div class="container">
+    <div class="form-card">
+        <!-- Заголовок формы -->
+        <div class="form-header">
+            <div class="form-icon">
+                <i class="bi" th:class="${user != null && user.id != null ? 'bi-person-badge' : 'bi-person-plus'}"></i>
             </div>
-            <a th:href="@{/}" class="btn btn-outline-secondary">Cancel</a>
+            <h2 th:text="${user != null && user.id != null ? '✏️ Редактировать пользователя' : '➕ Создать пользователя'}">
+                Форма пользователя
+            </h2>
+            <p class="mb-0 opacity-75" th:if="${user != null && user.id != null}">
+                ID: <span class="badge bg-light text-dark" th:text="${user.id}"></span>
+            </p>
         </div>
-    </form>
+
+        <!-- Сообщения -->
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show m-3" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span th:text="${errorMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show m-3" role="alert">
+            <i class="bi bi-check-circle-fill"></i>
+            <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- Форма -->
+        <div class="form-body">
+            <!-- ВАЖНО: Для @ModelAttribute User мы используем th:object -->
+            <form th:object="${user}"
+                  th:action="${user != null && user.id != null ? '/users/update' : '/users/create'}"
+                  method="post">
+
+                <!-- Скрытое поле ID -->
+                <input th:if="${user != null && user.id != null}"
+                       type="hidden"
+                       th:field="*{id}">
+
+                <!-- Поле Name -->
+                <div class="mb-4">
+                    <label for="name" class="form-label required-label fw-bold">
+                        <i class="bi bi-person me-1"></i> Имя пользователя
+                    </label>
+                    <input type="text"
+                           class="form-control form-control-lg"
+                           id="name"
+                           th:field="*{name}"
+                           required
+                           placeholder="Введите полное имя">
+                    <div class="form-text">Пример: Иван Иванов</div>
+                </div>
+
+                <!-- Поле Email -->
+                <div class="mb-4">
+                    <label for="email" class="form-label required-label fw-bold">
+                        <i class="bi bi-envelope me-1"></i> Email адрес
+                    </label>
+                    <input type="email"
+                           class="form-control form-control-lg"
+                           id="email"
+                           th:field="*{email}"
+                           required
+                           placeholder="Введите email">
+                    <div class="form-text">Пример: user@example.com</div>
+                </div>
+
+                <!-- Кнопки формы -->
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <a th:href="@{/users/}" class="btn btn-outline-secondary me-md-2">
+                        <i class="bi bi-arrow-left"></i> Отмена
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi" th:class="${user != null && user.id != null ? 'bi-check-circle' : 'bi-plus-circle'}"></i>
+                        <span th:text="${user != null && user.id != null ? 'Обновить' : 'Создать'}"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Футер формы -->
+        <div class="form-footer">
+            <p class="text-muted small mb-0">
+                <i class="bi bi-info-circle me-1"></i>
+                Поля отмеченные * обязательны для заполнения
+            </p>
+        </div>
+    </div>
 </div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Автофокус на первом поле
+    document.addEventListener('DOMContentLoaded', function() {
+        const nameInput = document.getElementById('name');
+        if (nameInput) {
+            nameInput.focus();
+        }
+
+        // Автоскрытие сообщений
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+    });
+</script>
 </body>
 </html>

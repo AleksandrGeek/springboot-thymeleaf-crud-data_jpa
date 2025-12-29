@@ -19,7 +19,7 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public void save(User user) {
-      entityManager.persist(user);
+        entityManager.persist(user);
 
     }
 
@@ -30,11 +30,8 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public List<User> getAll() {
-        String jpql = "SELECT u FROM User u ORDER BY u.id";
-        //TypedQuery<User> - типо_безопасный запрос
-        TypedQuery<User> query = entityManager.createQuery(jpql, User.class);
-        //getResultList - метод для получения списка
-        return query.getResultList();
+        return entityManager.createQuery("SELECT u FROM User u ORDER BY u.id", User.class
+        ).getResultList();
     }
 
     @Override
@@ -43,7 +40,7 @@ public class UserDaoImpl implements UserDao {
             throw new IllegalArgumentException("Cannot update user without ID");
         }
         //присоедини объект
-       entityManager.merge(user);
+        entityManager.merge(user);
     }
 
     @Override

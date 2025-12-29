@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -21,12 +22,8 @@ public class UserServiceImp implements UserService {
 
 
     @Override
-    public void createUser(String name, String email) {
-        validateNameAndEmail(name, email);
-
-        User user = new User(name, email);
-        user.setName(name);
-        user.setEmail(email);
+    public void createUser(User user) {
+        validateUser(user);
         userDao.save(user);
     }
 
@@ -35,12 +32,10 @@ public class UserServiceImp implements UserService {
     public User getUserById(Long id) {
         validateId(id);
 
-        User user = userDao.getById(id);
-        if (user == null) {
-            throw new IllegalArgumentException("Пользователь с таким ID " + id
-                    + " не найден");
-        }
-        return user;
+        return Optional.ofNullable(userDao.getById(id))
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Пользователь с ID " + id
+                                + " не найден"));
     }
 
     @Override
@@ -49,20 +44,15 @@ public class UserServiceImp implements UserService {
     }
 
     @Override
-    public void updateUser(Long id, String name, String email) {
-        validateId(id);
-        validateNameAndEmail(name, email);
+    public void updateUser(User user) {
+        validateUser(user);
+        validateId(user.getId());
 
 
-        User user = userDao.getById(id);
-        if (user == null) {
-            throw new IllegalArgumentException("Пользователь с таким ID " + id
-                    + "не найден");
+        if (userDao.getById(user.getId()) == null) {
+            throw new IllegalArgumentException("Пользователь с ID " + user.getId() + " не найден");
         }
-        user.setName(name);
-        user.setEmail(email);
         userDao.update(user);
-
     }
 
     @Override
@@ -77,15 +67,18 @@ public class UserServiceImp implements UserService {
         }
     }
 
-    private void validateNameAndEmail(String name, String email) {
-        if (name == null || name.trim().isEmpty()) {
+    private void validateUser(User user) {
+        if (user == null) {
+            throw new IllegalArgumentException("Пользователь не может быть null");
+        }
+        if (user.getName() == null || user.getName().trim().isEmpty()) {
             throw new IllegalArgumentException("Имя не может быть пустым");
         }
-        if (email == null || email.trim().isEmpty()) {
+        if (user.getEmail() == null || user.getEmail().trim().isEmpty()) {
             throw new IllegalArgumentException("Email не может быть пустым");
         }
-        if (!email.contains("@")) {
-            throw new IllegalArgumentException("Не верный формат email");
+        if (!user.getEmail().contains("@")) {
+            throw new IllegalArgumentException("Неверный формат email");
         }
     }
 }
